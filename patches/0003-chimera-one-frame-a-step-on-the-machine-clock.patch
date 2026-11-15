@@ -1,0 +1,242 @@
+diff --git a/Oxygen/oxygenengine/source/oxygen/application/Application.cpp b/Oxygen/oxygenengine/source/oxygen/application/Application.cpp
+index 2585514e..65455de8 100644
+--- a/Oxygen/oxygenengine/source/oxygen/application/Application.cpp
++++ b/Oxygen/oxygenengine/source/oxygen/application/Application.cpp
+@@ -725,8 +725,14 @@ void Application::render()
+ 
+ 		const double currentTime = mApplicationTimer.getSecondsSinceStart() * 1000.0;
+ 		const double tickLengthMilliseconds = 1000.0 / (double)mSimulation->getSimulationFrequency();
++	#ifdef CHIMERA
++		// Chimera: the frontend paces the steps; nothing here waits
++		const bool usingFramecap = false;
++		if (false)
++	#else
+ 		const bool usingFramecap = (drawer.getType() != Drawer::Type::OPENGL || Configuration::instance().mFrameSync != Configuration::FrameSyncType::VSYNC_ON) && (Configuration::instance().mFrameSync != Configuration::FrameSyncType::FRAME_INTERPOLATION);
+ 		if (usingFramecap)
++	#endif
+ 		{
+ 			double delay = mNextRefreshTime - currentTime;
+ 			if (delay < 0.0 || delay > tickLengthMilliseconds)
+@@ -744,6 +750,9 @@ void Application::render()
+ 		{
+ 			// Rely on V-Sync, but still use a minimum delay in case it's off
+ 			double delay = tickLengthMilliseconds - Profiling::getRootRegion().mTimer.getAccumulatedSeconds() * 1000.0;
++		#ifdef CHIMERA
++			delay = 0.0;
++		#endif
+ 			if (delay >= 1.0)
+ 			{
+ 				SDL_Delay(1);	// No precise timing should be needed here
+diff --git a/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.cpp b/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.cpp
+index 6d5deca7..04a14414 100644
+--- a/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.cpp
++++ b/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.cpp
+@@ -79,6 +79,18 @@ void EngineMain::execute()
+ 	shutdown();
+ }
+ 
++#ifdef CHIMERA
++bool EngineMain::chimeraStart()
++{
++	if (!startupEngine())
++		return false;
++	RMX_LOG_INFO("--- MAIN LOOP (Chimera: one pass a step) ---");
++	Application* application = new Application();
++	FTX::System->chimeraStart(*application);
++	return true;
++}
++#endif
++
+ void EngineMain::onActiveModsChanged()
+ {
+ 	// Update sprites
+@@ -483,6 +495,12 @@ bool EngineMain::initConfigAndSettings()
+ 	// Enable dev mode if requested
+ 	config.mDevMode.mEnabled = config.mDevMode.mEnableAtStartup;
+ 
++#ifdef CHIMERA
++	// Chimera: what the machine is, whatever a settings file says
++	extern void chimera_configure(Configuration& config);
++	chimera_configure(config);
++#endif
++
+ 	// Evaluate fail-safe mode
+ 	if (config.mFailSafeMode)
+ 	{
+diff --git a/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.h b/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.h
+index d83b9561..b5046cf7 100644
+--- a/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.h
++++ b/Oxygen/oxygenengine/source/oxygen/engine/EngineMain.h
+@@ -33,6 +33,12 @@ public:
+ 
+ 	void execute();
+ 
++#ifdef CHIMERA
++	// Chimera: the engine started and the application made, with no loop of
++	// its own; the core then runs the application's main loop once a step
++	bool chimeraStart();
++#endif
++
+ 	void onActiveModsChanged();
+ 	bool reloadFilePackage(std::wstring_view packageName, bool forceReload);
+ 
+diff --git a/Oxygen/oxygenengine/source/oxygen/helper/HighResolutionTimer.cpp b/Oxygen/oxygenengine/source/oxygen/helper/HighResolutionTimer.cpp
+index 284b68e5..44ecf6c0 100644
+--- a/Oxygen/oxygenengine/source/oxygen/helper/HighResolutionTimer.cpp
++++ b/Oxygen/oxygenengine/source/oxygen/helper/HighResolutionTimer.cpp
+@@ -9,6 +9,24 @@
+ #include "oxygen/pch.h"
+ #include "oxygen/helper/HighResolutionTimer.h"
+ 
++namespace
++{
++#ifdef CHIMERA
++	// Chimera: the machine's clock (SDL's performance counter, which the
++	// core answers in microseconds of the machine's time), never the host's
++	std::chrono::time_point<std::chrono::high_resolution_clock> timerNow()
++	{
++		return std::chrono::time_point<std::chrono::high_resolution_clock>(
++			std::chrono::duration_cast<std::chrono::high_resolution_clock::duration>(std::chrono::microseconds(SDL_GetPerformanceCounter())));
++	}
++#else
++	std::chrono::time_point<std::chrono::high_resolution_clock> timerNow()
++	{
++		return std::chrono::high_resolution_clock::now();
++	}
++#endif
++}
++
+ 
+ void HighResolutionTimer::reset()
+ {
+@@ -17,7 +35,7 @@ void HighResolutionTimer::reset()
+ 
+ void HighResolutionTimer::start()
+ {
+-	mStart = std::chrono::high_resolution_clock::now();
++	mStart = timerNow();
+ 	mRunning = true;
+ }
+ 
+@@ -25,7 +43,7 @@ double HighResolutionTimer::getSecondsSinceStart() const
+ {
+ 	if (mRunning)
+ 	{
+-		const Duration duration = (std::chrono::high_resolution_clock::now() - mStart);
++		const Duration duration = (timerNow() - mStart);
+ 		return duration.count();
+ 	}
+ 	return 0.0;
+@@ -50,7 +68,7 @@ void AccumulativeTimer::pauseTiming()
+ {
+ 	if (mRunning)
+ 	{
+-		mAccumulatedTime += (std::chrono::high_resolution_clock::now() - mStart);
++		mAccumulatedTime += (timerNow() - mStart);
+ 		mRunning = false;
+ 	}
+ }
+@@ -60,14 +78,14 @@ double AccumulativeTimer::getAccumulatedSeconds() const
+ 	Duration totalDuration = mAccumulatedTime;
+ 	if (mRunning)
+ 	{
+-		totalDuration += (std::chrono::high_resolution_clock::now() - mStart);
++		totalDuration += (timerNow() - mStart);
+ 	}
+ 	return totalDuration.count();
+ }
+ 
+ double AccumulativeTimer::getAccumulatedSecondsAndRestart()
+ {
+-	const TimePoint now = std::chrono::high_resolution_clock::now();
++	const TimePoint now = timerNow();
+ 	Duration totalDuration = mAccumulatedTime;
+ 	if (mRunning)
+ 	{
+diff --git a/Oxygen/oxygenengine/source/oxygen/simulation/Simulation.cpp b/Oxygen/oxygenengine/source/oxygen/simulation/Simulation.cpp
+index 5ab50ed0..3c09ade7 100644
+--- a/Oxygen/oxygenengine/source/oxygen/simulation/Simulation.cpp
++++ b/Oxygen/oxygenengine/source/oxygen/simulation/Simulation.cpp
+@@ -282,8 +282,14 @@ void Simulation::update(float timeElapsed)
+ 	{
+ 		if (mSimulationSpeed > 0.0f)
+ 		{
++		#ifdef CHIMERA
++			// Chimera: one step of the machine is one frame of the simulation,
++			// whatever the time a step lasts and whatever the speed
++			mCurrentTargetFrame = (double)mFrameNumber + 1.0;
++		#else
+ 			const float step = timeElapsed * mSimulationSpeed;
+ 			mCurrentTargetFrame += (double)step * (double)getSimulationFrequency();
++		#endif
+ 		}
+ 		else
+ 		{
+diff --git a/Oxygen/oxygenengine/source/oxygen_netcore/network/ConnectionManager.cpp b/Oxygen/oxygenengine/source/oxygen_netcore/network/ConnectionManager.cpp
+index 6b56a80e..e964b9b5 100644
+--- a/Oxygen/oxygenengine/source/oxygen_netcore/network/ConnectionManager.cpp
++++ b/Oxygen/oxygenengine/source/oxygen_netcore/network/ConnectionManager.cpp
+@@ -50,8 +50,16 @@ namespace
+ }
+ 
+ 
++#ifdef CHIMERA
++extern "C" uint64_t SDL_GetTicks64(void);
++#endif
++
+ uint64 ConnectionManager::getCurrentTimestamp()
+ {
++#ifdef CHIMERA
++	// Chimera: the machine's clock, never the host's
++	return SDL_GetTicks64();
++#endif
+ 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+ }
+ 
+diff --git a/librmx/source/rmxmedia/framework/SystemManager.cpp b/librmx/source/rmxmedia/framework/SystemManager.cpp
+index 7f038556..500979a6 100644
+--- a/librmx/source/rmxmedia/framework/SystemManager.cpp
++++ b/librmx/source/rmxmedia/framework/SystemManager.cpp
+@@ -183,7 +183,13 @@ namespace rmx
+ 		// Update timing
+ 		const SDL_TicksType oldTicks = mTicks;
+ 		mTicks = SDL_GetTicks();
++	#ifdef CHIMERA
++		// Chimera: a step of the machine is a sixtieth of a second, exactly
++		(void)oldTicks;
++		mTimeDifference = 1.0f / 60.0f;
++	#else
+ 		mTimeDifference = (float)(signed)(mTicks - oldTicks) * 0.001f;
++	#endif
+ 		mTotalTime += mTimeDifference;
+ 
+ 		const float dt = clamp(mTimeDifference, 0.0001f, 1.0f);
+@@ -217,6 +223,13 @@ namespace rmx
+ 		mRoot.removeChild(app);
+ 	}
+ 
++	void SystemManager::chimeraStart(GuiBase& app)
++	{
++		mRoot.addChild(app);
++		mTicks = SDL_GetTicks();
++		mRunning = true;
++	}
++
+ 	void SystemManager::mainLoop()
+ 	{
+ 		mRoot.beginFrame();
+diff --git a/librmx/source/rmxmedia/framework/SystemManager.h b/librmx/source/rmxmedia/framework/SystemManager.h
+index 6df57603..6260c0ec 100644
+--- a/librmx/source/rmxmedia/framework/SystemManager.h
++++ b/librmx/source/rmxmedia/framework/SystemManager.h
+@@ -26,6 +26,10 @@ namespace rmx
+ 		void mainLoop();
+ 		void run(GuiBase& app);
+ 
++		// Chimera: the application started without a loop of its own; the core
++		// then calls mainLoop once a step
++		void chimeraStart(GuiBase& app);
++
+ 		template<typename T> void run()
+ 		{
+ 			T& t = mRoot.createChild<T>();

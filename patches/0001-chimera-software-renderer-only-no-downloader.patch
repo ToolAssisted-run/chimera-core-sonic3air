@@ -1,0 +1,51 @@
+diff --git a/Oxygen/oxygenengine/source/oxygen/download/Downloader.cpp b/Oxygen/oxygenengine/source/oxygen/download/Downloader.cpp
+index fc0a031f..39b41fc8 100644
+--- a/Oxygen/oxygenengine/source/oxygen/download/Downloader.cpp
++++ b/Oxygen/oxygenengine/source/oxygen/download/Downloader.cpp
+@@ -9,7 +9,10 @@
+ #include "oxygen/pch.h"
+ #include "oxygen/download/Downloader.h"
+ 
+-#if defined(PLATFORM_WINDOWS)
++#if defined(CHIMERA)
++	// Chimera: no downloader - nothing in the machine reaches a network
++
++#elif defined(PLATFORM_WINDOWS)
+ 	#define PLATFORM_SUPPORTS_DOWNLOADER
+ 	#define USING_CURL
+ 
+diff --git a/librmx/source/rmxmedia.h b/librmx/source/rmxmedia.h
+index 6a4405c3..ad00fba6 100644
+--- a/librmx/source/rmxmedia.h
++++ b/librmx/source/rmxmedia.h
+@@ -19,7 +19,10 @@
+ 
+ // OpenGL support master switch
+ //  -> Can be disabled for platforms where OpenGL does not work
+-#define RMX_WITH_OPENGL_SUPPORT
++//  -> Chimera: RMX_NO_OPENGL builds the software renderer only
++#ifndef RMX_NO_OPENGL
++	#define RMX_WITH_OPENGL_SUPPORT
++#endif
+ 
+ 
+ // General includes
+diff --git a/librmx/source/rmxmedia_externals.h b/librmx/source/rmxmedia_externals.h
+index 183956a6..c0bd8f5e 100644
+--- a/librmx/source/rmxmedia_externals.h
++++ b/librmx/source/rmxmedia_externals.h
+@@ -66,6 +66,8 @@
+ #include "rmxmedia_sdl3_compat.h"
+ 
+ 
++// OpenGL (Chimera: none with RMX_NO_OPENGL)
++#ifndef RMX_NO_OPENGL
+ // OpenGL
+ #if defined(PLATFORM_WINDOWS)
+ 	#define ALLOW_LEGACY_OPENGL
+@@ -137,3 +139,5 @@
+ 	#define GLEW_NO_GLU
+ 	#include "rmxmedia/_glew/GL/glew.h"
+ #endif
++
++#endif

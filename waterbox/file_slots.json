@@ -1,0 +1,37 @@
+{
+  "_comment": "The kinds of file a Sonic 3 A.I.R. project holds. The ROM is firmware (waterbox.config). The slots: mods, any number of zips of upstream's mod folders, loaded at power-on in this order; the remastered soundtrack, from an A.I.R. installation; the game's save data, as Export Save Data wrote it.",
+  "slots": [
+    {
+      "id": "mods",
+      "title": "slot.mods",
+      "min": 0,
+      "max": -1,
+      "formats": [
+        "zip"
+      ],
+      "help": "slot.mods.help"
+    },
+    {
+      "id": "soundtrack",
+      "title": "slot.soundtrack",
+      "min": 0,
+      "max": -1,
+      "formats": [
+        "bin",
+        "ogg",
+        "json"
+      ],
+      "help": "slot.soundtrack.help"
+    },
+    {
+      "id": "savedata",
+      "title": "slot.savedata",
+      "min": 0,
+      "max": 1,
+      "formats": [
+        "zip"
+      ],
+      "help": "slot.savedata.help"
+    }
+  ]
+}

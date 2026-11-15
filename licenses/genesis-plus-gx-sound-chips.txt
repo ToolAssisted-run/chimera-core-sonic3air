@@ -1,0 +1,89 @@
+The Mega Drive sound chips in the Oxygen engine (Sonic 3 A.I.R.)
+==============================================================
+
+Two files of Sonic 3 A.I.R.'s Oxygen engine emulate the Mega Drive's sound
+chips, and both are, in upstream's own words, "a derivative work ... based on
+the Genesis Plus GX source code":
+
+  Oxygen/oxygenengine/source/oxygen/simulation/sound/sn76489.cpp (and .h)
+      the PSG (SN76489). Its header carries the Genesis Plus GX licence below,
+      by Eke-Eke: free to use and redistribute, but never sold or used in a
+      commercial product or activity, with the complete source of a modified
+      copy, and with this notice.
+
+  Oxygen/oxygenengine/source/oxygen/simulation/sound/ym2612.cpp (and .h)
+      the FM chip (YM2612), MAME's fm.c by Jarek Burczynski and Tatsuyuki
+      Satoh with Eke-Eke's changes for Genesis Plus GX. Its header names its
+      authors and states no licence of its own; Genesis Plus GX's changes are
+      under Genesis Plus GX's terms.
+
+Upstream marks both files as published under the GNU GPLv3 as well. The rest
+of Sonic 3 A.I.R. is under the GNU GPLv3 alone (LICENSE). See this
+repository's LICENSE for what that means for a package built from here.
+
+The sn76489.cpp header, as upstream carries it:
+
+/***************************************************************************************
+*  Genesis Plus
+*  PSG sound chip (SN76489A compatible)
+*
+*  Support for discrete chip & integrated (ASIC) clones
+*
+*  Noise implementation based on http://www.smspower.org/Development/SN76489#NoiseChannel
+*
+*  Copyright (C) 2016-2017 Eke-Eke (Genesis Plus GX)
+*
+*  Redistribution and use of this code or any derivative works are permitted
+*  provided that the following conditions are met:
+*
+*   - Redistributions may not be sold, nor may they be used in a commercial
+*     product or activity.
+*
+*   - Redistributions that are modified from the original source must include the
+*     complete source code, including the source code for all components used by a
+*     binary built from the modified sources. However, as a special exception, the
+*     source code distributed need not include anything that is normally distributed
+*     (in either source or binary form) with the major components (compiler, kernel,
+*     and so on) of the operating system on which the executable runs, unless that
+*     component itself accompanies the executable.
+*
+*   - Redistributions must reproduce the above copyright notice, this list of
+*     conditions and the following disclaimer in the documentation and/or other
+*     materials provided with the distribution.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+*  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+*  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+*  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+*  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+*  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*
+****************************************************************************************/
+
+The ym2612.cpp header, as upstream carries it:
+
+/*
+**
+** software implementation of Yamaha FM sound generator (YM2612/YM3438)
+**
+** Original code (MAME fm.c)
+**
+** Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
+** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
+**
+** Version 1.4 (final beta)
+**
+** Additional code & fixes by Eke-Eke for Genesis Plus GX
+**
+** Huge thanks to Nemesis, most of those fixes came from his tests on Sega Genesis hardware
+** More informations at http://gendev.spritesmind.net/forum/viewtopic.php?t=386
+**
+**  TODO:
+**  - better documentation
+**  - BUSY flag emulation
+*/

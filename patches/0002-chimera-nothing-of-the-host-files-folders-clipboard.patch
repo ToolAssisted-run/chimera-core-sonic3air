@@ -1,0 +1,336 @@
+diff --git a/Oxygen/oxygenengine/source/oxygen/platform/PlatformFunctions.cpp b/Oxygen/oxygenengine/source/oxygen/platform/PlatformFunctions.cpp
+index 34b40642..768a6e7e 100644
+--- a/Oxygen/oxygenengine/source/oxygen/platform/PlatformFunctions.cpp
++++ b/Oxygen/oxygenengine/source/oxygen/platform/PlatformFunctions.cpp
+@@ -174,6 +174,10 @@ namespace
+ 
+ void PlatformFunctions::preciseDelay(double milliseconds)
+ {
++#ifdef CHIMERA
++	// Chimera: nothing in the machine waits on the host
++	return;
++#endif
+ 	// This function is based on work by Sewer56, and used with his permission here
+ 	//  -> For the original, see https://github.com/Sewer56/sonic3air
+ 
+@@ -355,6 +359,10 @@ void PlatformFunctions::setAppIcon(int iconResource)
+ 
+ std::wstring PlatformFunctions::getAppDataPath()
+ {
++#ifdef CHIMERA
++	// Chimera: no host folder; the save data is the machine's own "savedata"
++	return L"";
++#endif
+ #ifdef PLATFORM_WINDOWS
+ 	PWSTR path = nullptr;
+ 	if (S_OK == SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_DONT_UNEXPAND | KF_FLAG_CREATE, nullptr, &path))
+@@ -378,6 +386,10 @@ std::wstring PlatformFunctions::getAppDataPath()
+ 
+ std::wstring PlatformFunctions::tryGetSteamRomPath(const std::wstring& romName)
+ {
++#ifdef CHIMERA
++	// Chimera: the ROM is the project's firmware, never looked for on the host
++	return L"";
++#endif
+ #ifdef PLATFORM_WINDOWS
+ 	const std::wstring steamPath = getSteamInstallationPath();
+ 	if (!steamPath.empty())
+@@ -551,6 +563,10 @@ std::wstring PlatformFunctions::openFileSelectionDialog(const std::wstring& titl
+ 
+ void PlatformFunctions::openFileExternal(const std::wstring& path)
+ {
++#ifdef CHIMERA
++	// Chimera: nothing is opened on the host
++	return;
++#endif
+ #if defined(PLATFORM_WINDOWS)
+ 	::ShellExecuteW(nullptr, nullptr, path.c_str(), nullptr, nullptr, SW_SHOW);
+ #elif defined(PLATFORM_LINUX)
+@@ -562,6 +578,9 @@ void PlatformFunctions::openFileExternal(const std::wstring& path)
+ 
+ void PlatformFunctions::openDirectoryExternal(const std::wstring& path)
+ {
++#ifdef CHIMERA
++	return;
++#endif
+ #if defined(PLATFORM_WINDOWS)
+ 	::ShellExecuteW(nullptr, L"open", L"explorer", (L"file://" + path).c_str(), nullptr, SW_SHOW);
+ #elif defined(PLATFORM_MAC)
+@@ -575,6 +594,9 @@ void PlatformFunctions::openDirectoryExternal(const std::wstring& path)
+ 
+ void PlatformFunctions::openURLExternal(const std::string& url)
+ {
++#ifdef CHIMERA
++	return;
++#endif
+ #ifdef PLATFORM_WEB
+ 	std::string command = "window.location.href = \"" + url + "\"";
+ 	emscripten_run_script(command.c_str());
+@@ -585,6 +607,9 @@ void PlatformFunctions::openURLExternal(const std::string& url)
+ 
+ bool PlatformFunctions::openApplicationExternal(const std::wstring& path, const std::wstring& arguments, const std::wstring& directory)
+ {
++#ifdef CHIMERA
++	return false;
++#endif
+ #if defined(PLATFORM_WINDOWS)
+ 	return ::ShellExecuteW(nullptr, L"open", path.c_str(), arguments.c_str(), directory.c_str(), SW_SHOW);
+ #elif defined(PLATFORM_LINUX)
+@@ -606,6 +631,10 @@ bool PlatformFunctions::isDebuggerPresent()
+ 
+ bool PlatformFunctions::hasClipboardSupport()
+ {
++#ifdef CHIMERA
++	// Chimera: the host's clipboard is not the machine's
++	return false;
++#endif
+ #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)
+ 	return true;
+ #else
+@@ -615,16 +644,25 @@ bool PlatformFunctions::hasClipboardSupport()
+ 
+ bool PlatformFunctions::copyToClipboard(const std::string& string)
+ {
++#ifdef CHIMERA
++	return false;
++#endif
+ 	return (SDL_SetClipboardText(string.c_str()) == 0);
+ }
+ 
+ bool PlatformFunctions::copyToClipboard(std::wstring_view string)
+ {
++#ifdef CHIMERA
++	return false;
++#endif
+ 	return (SDL_SetClipboardText(rmx::convertToUTF8(string).c_str()) == 0);
+ }
+ 
+ bool PlatformFunctions::pasteFromClipboard(std::wstring& outString)
+ {
++#ifdef CHIMERA
++	return false;
++#endif
+ 	if (!SDL_HasClipboardText())
+ 		return false;
+ 
+diff --git a/librmx/source/rmxbase/file/FileIO.cpp b/librmx/source/rmxbase/file/FileIO.cpp
+index 7f430116..07459867 100644
+--- a/librmx/source/rmxbase/file/FileIO.cpp
++++ b/librmx/source/rmxbase/file/FileIO.cpp
+@@ -9,7 +9,25 @@
+ #include "rmxbase.h"
+ #include <fstream>
+ 
+-#ifdef PLATFORM_WINDOWS
++#if defined(CHIMERA)
++	// Chimera: every file is in the machine's memory, kept by the core
++	// (waterbox/memfs.cpp); nothing here reaches the host's file system
++	#include <string_view>
++	namespace chimera_memfs
++	{
++		bool exists(std::wstring_view path);
++		bool isFile(std::wstring_view path);
++		bool isDirectory(std::wstring_view path);
++		bool fileSize(std::wstring_view path, uint64_t& outSize);
++		bool readFile(std::wstring_view path, std::vector<uint8_t>& outData);
++		bool saveFile(std::wstring_view path, const void* data, size_t size);
++		bool rename(std::wstring_view oldPath, std::wstring_view newPath);
++		bool remove(std::wstring_view path, bool directory);
++		bool createDirectory(std::wstring_view path);
++		void listDirectory(std::wstring_view path, std::vector<std::wstring>* outFiles, std::vector<size_t>* outSizes, std::vector<std::wstring>* outDirectories);
++	}
++
++#elif defined(PLATFORM_WINDOWS)
+ 	#include <filesystem>
+ 	namespace std_filesystem = std::filesystem;
+ 	#define USE_STD_FILESYSTEM
+@@ -45,7 +63,9 @@ namespace rmx
+ 	{
+ 		bool createDir(const WString& path, bool recursive)
+ 		{
+-		#ifdef USE_STD_FILESYSTEM
++		#if defined(CHIMERA)
++			return chimera_memfs::createDirectory(path.toStdWString());
++		#elif defined(USE_STD_FILESYSTEM)
+ 			// Create directory or hierarchy of directories (if recursive == true)
+ 			if (recursive)
+ 			{
+@@ -99,7 +119,30 @@ namespace rmx
+ 			std::vector<std::wstring> subDirectoriesBuffer;
+ 			std::vector<std::wstring>& subDirectories = (nullptr != outSubDirectories) ? *outSubDirectories : subDirectoriesBuffer;
+ 
+-		#ifdef PLATFORM_WINDOWS
++		#if defined(CHIMERA)
++
++			std::vector<std::wstring> names;
++			std::vector<size_t> sizes;
++			std::vector<std::wstring> directories;
++			chimera_memfs::listDirectory(basePath, &names, &sizes, (recursive || nullptr != outSubDirectories) ? &directories : nullptr);
++			for (const std::wstring& name : directories)
++				subDirectories.push_back(name);
++			if (nullptr != outFileEntries)
++			{
++				for (size_t k = 0; k < names.size(); ++k)
++				{
++					if (filemask.empty() || matchesPattern(names[k].c_str(), std::wstring(filemask).c_str()))
++					{
++						FileIO::FileEntry& entry = vectorAdd(*outFileEntries);
++						entry.mFilename = names[k];
++						entry.mPath = basePath;
++						entry.mTime = 0;
++						entry.mSize = sizes[k];
++					}
++				}
++			}
++
++		#elif defined(PLATFORM_WINDOWS)
+ 
+ 			// Find files
+ 			_wfinddata_t fileinfo;
+@@ -250,7 +293,9 @@ namespace rmx
+ 
+ 	bool FileIO::exists(std::wstring_view path)
+ 	{
+-	#ifdef USE_STD_FILESYSTEM
++	#if defined(CHIMERA)
++		return chimera_memfs::exists(path);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(path.data());
+ 		return std_filesystem::exists(fspath);
+ 	#else
+@@ -261,7 +306,9 @@ namespace rmx
+ 
+ 	bool FileIO::isFile(std::wstring_view path)
+ 	{
+-	#ifdef USE_STD_FILESYSTEM
++	#if defined(CHIMERA)
++		return chimera_memfs::isFile(path);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(path.data());
+ 		return std_filesystem::is_regular_file(fspath);
+ 	#else
+@@ -272,7 +319,9 @@ namespace rmx
+ 
+ 	bool FileIO::isDirectory(std::wstring_view path)
+ 	{
+-	#ifdef USE_STD_FILESYSTEM
++	#if defined(CHIMERA)
++		return chimera_memfs::isDirectory(path);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(path.data());
+ 		return std_filesystem::is_directory(fspath);
+ 	#else
+@@ -285,7 +334,13 @@ namespace rmx
+ 	{
+ 		mLastErrorCode.clear();
+ 
+-	#if defined(USE_STD_FILESYSTEM) && !defined(PLATFORM_MAC)
++	#if defined(CHIMERA)
++		uint64_t size = 0;
++		if (!chimera_memfs::fileSize(filename, size))
++			return false;
++		outSize = (uint64)size;
++		return true;
++	#elif defined(USE_STD_FILESYSTEM) && !defined(PLATFORM_MAC)
+ 		const std_filesystem::path fspath(filename.data());
+ 		const std::uintmax_t size = std_filesystem::file_size(fspath, mLastErrorCode);
+ 		if (mLastErrorCode)
+@@ -305,7 +360,11 @@ namespace rmx
+ 	{
+ 		mLastErrorCode.clear();
+ 
+-	#if defined(USE_STD_FILESYSTEM)
++	#if defined(CHIMERA)
++		// no file has a time of its own in the machine
++		outTime = 0;
++		return chimera_memfs::exists(filename);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(filename.data());
+ 		const std_filesystem::file_time_type time = std_filesystem::last_write_time(fspath, mLastErrorCode);
+ 		if (mLastErrorCode)
+@@ -323,6 +382,9 @@ namespace rmx
+ 
+ 	bool FileIO::readFile(std::wstring_view filename, std::vector<uint8>& outData)
+ 	{
++	#if defined(CHIMERA)
++		return chimera_memfs::readFile(filename, outData);
++	#endif
+ 		// Read from file system
+ 	#ifdef USE_UTF8_PATHS
+ 		std::ifstream stream(rmx::convertToUTF8(filename).c_str(), std::ios::binary);
+@@ -346,6 +408,9 @@ namespace rmx
+ 
+ 	bool FileIO::saveFile(std::wstring_view filename, const void* data, size_t size)
+ 	{
++	#if defined(CHIMERA)
++		return chimera_memfs::saveFile(filename, data, size);
++	#endif
+ 		// Create directory if needed
+ 		const size_t slashPosition = filename.find_last_of(L"/\\");
+ 		if (slashPosition != std::string::npos)
+@@ -393,7 +458,9 @@ namespace rmx
+ 	{
+ 		mLastErrorCode.clear();
+ 
+-	#if defined(USE_STD_FILESYSTEM)
++	#if defined(CHIMERA)
++		return chimera_memfs::rename(oldFilename, newFilename);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspathOld(oldFilename.data());
+ 		const std_filesystem::path fspathNew(newFilename.data());
+ 		std_filesystem::rename(fspathOld, fspathNew, mLastErrorCode);
+@@ -408,7 +475,9 @@ namespace rmx
+ 	{
+ 		mLastErrorCode.clear();
+ 
+-	#if defined(USE_STD_FILESYSTEM)
++	#if defined(CHIMERA)
++		return chimera_memfs::rename(oldFilename, newFilename);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspathOld(oldFilename.data());
+ 		const std_filesystem::path fspathNew(newFilename.data());
+ 		std_filesystem::rename(fspathOld, fspathNew, mLastErrorCode);
+@@ -423,7 +492,9 @@ namespace rmx
+ 	{
+ 		mLastErrorCode.clear();
+ 
+-	#if defined(USE_STD_FILESYSTEM)
++	#if defined(CHIMERA)
++		return chimera_memfs::remove(path, false);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(path);
+ 		std_filesystem::remove(fspath, mLastErrorCode);
+ 		return !mLastErrorCode;
+@@ -437,7 +508,9 @@ namespace rmx
+ 	{
+ 		mLastErrorCode.clear();
+ 
+-	#if defined(USE_STD_FILESYSTEM)
++	#if defined(CHIMERA)
++		return chimera_memfs::remove(path, true);
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(path);
+ 		std_filesystem::remove_all(fspath, mLastErrorCode);
+ 		return !mLastErrorCode;
+@@ -669,7 +742,9 @@ namespace rmx
+ 
+ 	std::wstring FileIO::getCurrentDirectory()
+ 	{
+-	#ifdef USE_STD_FILESYSTEM
++	#if defined(CHIMERA)
++		return L"/";
++	#elif defined(USE_STD_FILESYSTEM)
+ 		return std_filesystem::current_path().wstring();
+ 	#else
+ 		return L"";
+@@ -678,7 +753,9 @@ namespace rmx
+ 
+ 	void FileIO::setCurrentDirectory(std::wstring_view path)
+ 	{
+-	#ifdef USE_STD_FILESYSTEM
++	#if defined(CHIMERA)
++		(void)path;
++	#elif defined(USE_STD_FILESYSTEM)
+ 		const std_filesystem::path fspath(path.data());
+ 		std_filesystem::current_path(fspath);
+ 	#endif

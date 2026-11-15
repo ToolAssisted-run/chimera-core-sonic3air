@@ -1,0 +1,84 @@
+{
+  "package": "sonic3air",
+  "effectiveTerms": "GNU GPL v3 for Sonic 3 A.I.R. (the Oxygen engine, librmx, lemonscript, the game's code, scripts and data) and for this repository's own files; the Genesis Plus GX terms (non-commercial) for the two sound chip files derived from Genesis Plus GX; the libraries' own licences",
+  "commercialUse": "prohibited",
+  "note": "The built core combines this repository's integration (GPL-3.0-or-later) with Sonic 3 A.I.R. by Eukaryot (GPL-3.0), compiled in from the submodule extern/sonic3air with this repository's patches/ applied, and its game data and scripts carried in the package as upstream publishes them, without the remastered soundtrack. Two of its files, the Mega Drive sound chips (sn76489 and ym2612), are derived from Genesis Plus GX and carry its terms: no sale and no commercial use, the complete source with a modified copy, the notice kept (licenses/genesis-plus-gx-sound-chips.txt). Upstream itself distributes them inside its GPL-3.0 program. The GPL forbids adding restrictions, and the Genesis Plus GX terms add one; the owner of this project accepted the combination as upstream ships it on 2026-11-15, and the package is declared non-commercial. Also compiled in: SDL 2 (zlib licence), zlib and minizip (zlib licence), libogg and libvorbis (BSD-3-Clause), jsoncpp (MIT or public domain), blip_buf (LGPL-2.1-or-later). The package carries none of SEGA's game: the Sonic 3 & Knuckles ROM is the project's firmware, supplied by the user. Sonic the Hedgehog is a trademark of SEGA; Sonic 3 A.I.R. is a non-profit fan project not affiliated with SEGA or Sonic Team.",
+  "components": [
+    {
+      "name": "chimera-core-sonic3air (integration)",
+      "license": "GPL-3.0-or-later",
+      "url": "https://github.com/ToolAssisted-run/chimera-core-sonic3air",
+      "commit": "{selfCommit}",
+      "file": "LICENSE",
+      "sourceUrl": "https://github.com/ToolAssisted-run/chimera-core-sonic3air/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "Sonic 3 A.I.R. (the Oxygen engine, librmx, lemonscript, the game's code, scripts and data)",
+      "license": "GPL-3.0",
+      "url": "https://github.com/Eukaryot/sonic3air",
+      "commit": "{submodule:extern/sonic3air}",
+      "file": "extern/sonic3air/LICENSE",
+      "sourceUrl": "https://github.com/Eukaryot/sonic3air/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "Genesis Plus GX (the sound chips sn76489 and ym2612, in the Oxygen engine)",
+      "license": "Genesis Plus GX licence (non-commercial); ym2612 from MAME's fm.c",
+      "url": "https://github.com/ekeeke/Genesis-Plus-GX",
+      "file": "licenses/genesis-plus-gx-sound-chips.txt"
+    },
+    {
+      "name": "blip_buf (in the Oxygen engine's sound)",
+      "license": "LGPL-2.1-or-later",
+      "url": "https://github.com/ekeeke/Genesis-Plus-GX",
+      "file": "extern/sonic3air/Oxygen/oxygenengine/source/oxygen/simulation/sound/blip_buf.cpp"
+    },
+    {
+      "name": "SDL 2 (upstream's copy, framework/external/sdl)",
+      "license": "Zlib",
+      "url": "https://github.com/libsdl-org/SDL",
+      "file": "extern/sonic3air/framework/external/sdl/SDL2/LICENSE.txt"
+    },
+    {
+      "name": "zlib and minizip (upstream's copy, framework/external/zlib)",
+      "license": "Zlib",
+      "url": "https://zlib.net",
+      "file": "extern/sonic3air/framework/external/zlib/zlib/LICENSE"
+    },
+    {
+      "name": "libogg (upstream's copy, framework/external/ogg-vorbis)",
+      "license": "BSD-3-Clause",
+      "url": "https://github.com/xiph/ogg",
+      "file": "extern/sonic3air/framework/external/ogg-vorbis/libogg/COPYING"
+    },
+    {
+      "name": "libvorbis (upstream's copy, framework/external/ogg-vorbis)",
+      "license": "BSD-3-Clause",
+      "url": "https://github.com/xiph/vorbis",
+      "file": "extern/sonic3air/framework/external/ogg-vorbis/libvorbis/COPYING"
+    },
+    {
+      "name": "jsoncpp (in librmx, rmxbase/_jsoncpp)",
+      "license": "MIT OR public domain",
+      "url": "https://github.com/open-source-parsers/jsoncpp",
+      "file": "extern/sonic3air/Oxygen/sonic3air/_master_image_template/doc/license-thirdparty/jsoncpp_LICENSE.txt"
+    },
+    {
+      "name": "GNU FreeFont (the engine's sampled font, data/font/freefont_sampled.png)",
+      "license": "GPL-3.0-or-later with the font exception",
+      "url": "https://www.gnu.org/software/freefont/",
+      "file": "extern/sonic3air/Oxygen/sonic3air/_master_image_template/doc/license-thirdparty/freefont/COPYING"
+    },
+    {
+      "name": "Droid Sans (data/font/ttf/DroidSans.ttf)",
+      "license": "Apache-2.0",
+      "url": "https://fonts.google.com/specimen/Droid+Sans",
+      "file": "extern/sonic3air/Oxygen/oxygenengine/data/font/ttf/DroidSans_LICENSE.txt"
+    },
+    {
+      "name": "A Sega Genesis six-button controller, a photograph (pictures/genesis-6-button-controller.png)",
+      "license": "Public domain",
+      "url": "https://commons.wikimedia.org/wiki/File:Sega-Genesis-6But-Cont.jpg",
+      "file": "pictures/genesis-6-button-controller.txt"
+    }
+  ]
+}

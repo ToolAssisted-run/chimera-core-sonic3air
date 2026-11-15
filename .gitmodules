@@ -1,0 +1,3 @@
+[submodule "extern/sonic3air"]
+	path = extern/sonic3air
+	url = https://github.com/Eukaryot/sonic3air
