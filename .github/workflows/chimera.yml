@@ -128,7 +128,8 @@ jobs:
       - name: Publish the core package
         uses: actions/upload-artifact@v7
         with:
-          name: sonic3air-${{ github.sha }}-${{ matrix.arch }}
+          # one CPU, so one artifact named without it, as an x86_64-only core's is
+          name: sonic3air-${{ github.sha }}
           path: chimera-checkout/build/Cores/sonic3air.chimeraCore
           if-no-files-found: error
 
@@ -156,4 +157,3 @@ jobs:
       core-id: sonic3air
       artifact: sonic3air-${{ github.sha }}
       package: sonic3air.chimeraCore
-      arches: x86_64
