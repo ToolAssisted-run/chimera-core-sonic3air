@@ -41,7 +41,10 @@ is kept in the machine, never on your computer.
 
 No network: no update check, no ghost sync or other online features, no
 netplay, no downloads. No Discord, no OpenGL renderer (the game draws with
-its software renderer). [docs/PLAN.md](docs/PLAN.md) says what was decided
+its software renderer). No lag frames: A.I.R.'s engine reads the controls
+on every frame, so Chimera's lag counter never counts one. No aarch64
+package: game cores are published for x86_64 only (an aarch64 Mac runs it
+under Rosetta 2). [docs/PLAN.md](docs/PLAN.md) says what was decided
 and measured, [docs/BUILDING.md](docs/BUILDING.md) how to build and test it.
 
 ## Licence

@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Linux (CI uses Ubuntu 24.04, x86_64 and aarch64). gcc and g++, make, python3,
+Linux (CI uses Ubuntu 24.04, x86_64). gcc and g++, make, python3,
 binutils (`nm`), and a Chimera checkout with miniBox built with its C++ guest
 toolchain:
 
@@ -113,11 +113,10 @@ Chimera's `publish-core.yml`. Every test on the game runs where the ROM is.
 - Native and sandbox differ: something reads the host (a clock, a file, a
   random number). The wraps are in `sources.mk` (`WRAPS`).
 
-## Two CPUs
+## One CPU
 
-CI builds and tests the core twice, once for each CPU, on a runner of that
-CPU (x86_64 on ubuntu-24.04, aarch64 on ubuntu-24.04-arm): a package is
-machine code for one CPU. The linked `core.wbx` goes through miniBox's
-`wbx-tp-rewrite.py` on both: on aarch64 its thread-pointer reads are pointed
-at the machine's slot, and on x86_64 they are listed for an Intel Mac to
-patch as it loads. Only x86_64 has been built and run here.
+CI builds and tests the core for x86_64 only, on ubuntu-24.04: game cores
+get no aarch64 package (Chimera's design log, user-decided 2026-11-07). The
+linked `core.wbx` goes through miniBox's `wbx-tp-rewrite.py`, which lists
+its thread-pointer reads for an Intel Mac to patch as it loads. The build
+files still know aarch64, but no aarch64 package has been built or run.

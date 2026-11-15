@@ -300,3 +300,12 @@ the check compares what the window adopted with the package, and the
 window kept the name), gui:writes-nothing-home (not broken). The last
 three come from the RSDK cores' frontend tests.
 
+## The owner's answers before publishing (owner, 2026-11-15)
+
+- Publish it.
+- A.I.R.'s options stay in the game's own Options menu, recorded as presses,
+  or in the save data; none becomes a project setting.
+- No lag frames, as the engine reads the controls on every frame; the README
+  says so.
+- x86_64 only: Chimera's owner decided on 2026-11-07 that game cores get no
+  aarch64 package, so the workflow builds and publishes x86_64 alone.

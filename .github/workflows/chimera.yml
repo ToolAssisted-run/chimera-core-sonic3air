@@ -42,8 +42,9 @@ env:
 jobs:
 
   gate:
-    # Once per CPU, each on a runner of that CPU: a package is machine code for
-    # one CPU, and miniBox's guest toolchain builds for the CPU it runs on.
+    # x86_64 only: game cores get no aarch64 package (Chimera's design log,
+    # "aarch64 packages for emulator cores, not game cores", user-decided
+    # 2026-11-07). The matrix stays, so a CPU is one line.
     name: gate (package, declaration, Chimera contract) (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
@@ -54,9 +55,6 @@ jobs:
           - arch: x86_64
             runner: ubuntu-24.04
             qt: gcc_64
-          - arch: aarch64
-            runner: ubuntu-24.04-arm
-            qt: gcc_arm64
     steps:
       - uses: actions/checkout@v6
         with:
@@ -158,4 +156,4 @@ jobs:
       core-id: sonic3air
       artifact: sonic3air-${{ github.sha }}
       package: sonic3air.chimeraCore
-      arches: x86_64 aarch64
+      arches: x86_64
